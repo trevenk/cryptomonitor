@@ -2,4 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
-security.R
+resources/global_env_methods/security.R
+.keys

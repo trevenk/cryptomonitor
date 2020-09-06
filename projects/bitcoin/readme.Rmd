@@ -1,0 +1,20 @@
+---
+title: "Readme BTC"
+author: "trevenk"
+date: "9/6/2020"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## El proyecto
+
+En este sub-projecto de crypto monitor, todos los esfuerzos se centran en lograr una descripción tan exacta como sea posible del comportamiento del bitcoin. Para esto inicialmente se propone centrarse en los libros de ordenes de los exchanges más importantes.
+
+### Este documento
+
+El presente documento consiste en una visualización resumida del proyecto mencionado. Aquí se presentarán algunos de los principales indicadores, tanto de la ejecución del proyecto en sí como del comportamiento de la blockachain y el BTC. 
+
