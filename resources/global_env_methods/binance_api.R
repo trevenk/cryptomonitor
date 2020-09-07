@@ -5,7 +5,7 @@ BINANCE_ENDPOINT_G <<- 'https://api.binance.com'
 
 
 #### Core Methods ####
-makeRequest <- function(request, parameters, api_key) {#### Later I can add the use for an api key but for the requests I'm making right now it's not 
+makeRequest <- function(request, parameters, api_key) {
   if(missing(api_key)) {
     if(missing(parameters)) {                         #### needed
       return(GET(paste0(BINANCE_ENDPOINT_G, request)))
@@ -111,32 +111,68 @@ binanceRecentTradedList <- function(symbol, limit, parsed) {
 binanceOldTradeLookup <- function(symbol, limit, id, parsed) {
   api_key <- getCredentials(name = "binance")
   if(missing(parsed)) parsed <- FALSE
-  if(!parsed) {
-    if(missing(limit)) {
-      return(makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol), api_key = api_key))
-    } else {
-      if(!(limit %in% c(500, 1000))) {
-        warning("Limtis admited are 500 or 1000")
-        limit <- 1000
+  if(missing(id)) {
+    if(!parsed) {
+      if(missing(limit)) {
+        return(makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol), api_key = api_key))
+      } else {
+        if(!(limit %in% c(500, 1000))) {
+          warning("Limtis admited are 500 or 1000")
+          limit <- 1000
+        }
+        return(makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol,  "&limit=", limit), api_key = api_key))
       }
-      return(makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol,  "&limit=", limit)))
+    } else {
+      if(missing(limit)) {
+        response <- makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol), api_key = api_key)
+        traded <- data.frame(do.call(rbind, content(response)))
+      } else {
+        if(!(limit %in% c(500, 1000))) {
+          warning("Limtis admited are 500 or 1000")
+          limit <- 1000
+        }
+        response <- makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol,  "&limit=", limit), api_key = api_key)
+        traded <- data.frame(do.call(rbind, content(response)))
+      }
+      traded <- data.frame(unlist(apply(traded, 2, unlist)))
+      return(traded)
     }
   } else {
-    if(missing(limit)) {
-      response <- makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol), api_key = api_key)
-      traded <- data.frame(do.call(rbind, content(response)))
-    } else {
-      if(!(limit %in% c(500, 1000))) {
-        warning("Limtis admited are 500 or 1000")
-        limit <- 1000
+    if(!parsed) {
+      if(missing(limit)) {
+        return(makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol), api_key = api_key))
+      } else {
+        if(!(limit %in% c(500, 1000))) {
+          warning("Limtis admited are 500 or 1000")
+          limit <- 1000
+        }
+        return(makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol,  "&limit=", limit), api_key = api_key))
       }
-      response <- makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol,  "&limit=", limit), api_key = api_key)
-      traded <- data.frame(do.call(rbind, content(response)))
+    } else {
+      if(missing(limit)) {
+        response <- makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol, "&fromId=", id), api_key = api_key)
+        traded <- data.frame(do.call(rbind, content(response)))
+      } else {
+        if(!(limit %in% c(500, 1000))) {
+          warning("Limtis admited are 500 or 1000")
+          limit <- 1000
+        }
+        response <- makeRequest(request = '/api/v3/historicalTrades', parameters = paste0("?symbol=", symbol, "&fromId=", id,  "&limit=", limit), api_key = api_key)
+        traded <- data.frame(do.call(rbind, content(response)))
+      }
+      traded <- data.frame(unlist(apply(traded, 2, unlist)))
+      return(traded)
     }
-    traded <- data.frame(unlist(apply(traded, 2, unlist)))
-    return(traded)
   }
 }
 #### TESTING ####
-test <- binanceRecentTradedList(symbol = "BTCUSDT", limit = 500, parsed = T)
-
+time <- binanceCheckServerTime()
+test <- binanceOldTradeLookup(symbol = "LENDUSDT", limit = 1000, parsed = T, id = "0x3dfd23A6c5E8BbcFc9581d2E864a68feb6a076d3")
+test$datetime <- unlist(lapply(test$time, function(x) {as.character(as.Date(as.POSIXct(x = as.integer(substr(x, 1, 10)), origin="1970-01-01")))}))
+head(test)
+test <- content(test)
+test <- binanceOrderBook(symbol = "LENDUSDT", limit = 5, parsed = T)
+write.csv(x = test$asks, file = "../../Documents/new_order/habana/datos/binance_asks-lendusdt.csv", col.names = T, sep = ",")
+b_symbols <- binanceExchangeInfo()
+binance_symbols <- do.call(rbind, b_symbols$symbols)
+b_symbols <- content(b_symbols)
