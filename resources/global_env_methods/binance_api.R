@@ -86,9 +86,9 @@ binanceRecentTradedList <- function(symbol, limit, parsed) {
     if(missing(limit)) {
       return(makeRequest(request = '/api/v3/trades', parameters = paste0("?symbol=", symbol)))
     } else {
-      if(limit > 500) {
-        warning("Maximum limit admited is 500. Ther response will return 500 observations")
-        limit <- 500
+      if(limit > 1000) {
+        warning("Maximum limit admited is 1000 Ther response will return 500 observations")
+        limit <- 1000
       }
       return(makeRequest(request = '/api/v3/trades', parameters = paste0("?symbol=", symbol,  "&limit=", limit)))
     }
@@ -97,8 +97,8 @@ binanceRecentTradedList <- function(symbol, limit, parsed) {
       response <- makeRequest(request = '/api/v3/trades', parameters = paste0("?symbol=", symbol))
       traded <- data.frame(do.call(rbind, content(response)))
     } else {
-      if(limit > 500) {
-        warning("Maximum limit admited is 500. Ther response will return 500 observations")
+      if(limit < 500) {
+        warning("Minimum limit admited is 500. Ther response will return 500 observations")
         limit <- 500
       }
       response <- makeRequest(request = '/api/v3/trades', parameters = paste0("?symbol=", symbol,  "&limit=", limit))
@@ -165,14 +165,14 @@ binanceOldTradeLookup <- function(symbol, limit, id, parsed) {
     }
   }
 }
-#### TESTING ####
-time <- binanceCheckServerTime()
-test <- binanceOldTradeLookup(symbol = "LENDUSDT", limit = 1000, parsed = T, id = "0x3dfd23A6c5E8BbcFc9581d2E864a68feb6a076d3")
-test$datetime <- unlist(lapply(test$time, function(x) {as.character(as.Date(as.POSIXct(x = as.integer(substr(x, 1, 10)), origin="1970-01-01")))}))
-head(test)
-test <- content(test)
-test <- binanceOrderBook(symbol = "LENDUSDT", limit = 5, parsed = T)
-write.csv(x = test$asks, file = "../../Documents/new_order/habana/datos/binance_asks-lendusdt.csv", col.names = T, sep = ",")
-b_symbols <- binanceExchangeInfo()
-binance_symbols <- do.call(rbind, b_symbols$symbols)
-b_symbols <- content(b_symbols)
+binanceSymbolPriceTricker <- function(symbol, parsed = F) {
+  response <- makeRequest(request = '/api/v3/ticker/price', parameters = paste0("?symbol=", symbol))
+  if(parsed) {
+    return(content(response))
+  } else {
+    return(response)
+  }
+}
+
+response <- binanceSymbolPriceTricker(symbol = "BTCUSDT", parsed = T)
+content(response)
